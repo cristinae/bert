@@ -159,16 +159,21 @@ def whitespace_tokenize(text):
 
 
 class FullTokenizer(object):
-  """Runs end-to-end tokenziation."""
+  """Runs end-to-end tokenisation."""
 
-  def __init__(self, vocab_file, do_lower_case=True):
+  def __init__(self, vocab_file, do_lower_case=True, do_tokenisation=True, do_wordpiece=True):
     self.vocab = load_vocab(vocab_file)
     self.inv_vocab = {v: k for k, v in self.vocab.items()}
-    self.basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case)
-    self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab)
+    self.basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case, do_tokenisation=do_tokenisation)
+    self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab, do_wordpiece=do_wordpiece)
 
   def tokenize(self, text):
     split_tokens = []
+    # fastest option if our input is already preprocessed
+    if not self.do_tokenisation and not self.do_wordpiece:
+       text = convert_to_unicode(text)
+       text = self._clean_text(text)
+       return whitespace_tokenize(text)
     for token in self.basic_tokenizer.tokenize(text):
       for sub_token in self.wordpiece_tokenizer.tokenize(token):
         split_tokens.append(sub_token)
@@ -185,18 +190,22 @@ class FullTokenizer(object):
 class BasicTokenizer(object):
   """Runs basic tokenization (punctuation splitting, lower casing, etc.)."""
 
-  def __init__(self, do_lower_case=True):
+  def __init__(self, do_lower_case=True, do_tokenisation=True):
     """Constructs a BasicTokenizer.
 
     Args:
       do_lower_case: Whether to lower case the input.
-    """
+      do_tokenisation: Whether to tokenise the input.
+   """
     self.do_lower_case = do_lower_case
+    self.do_tokenisation = do_tokenisation
 
   def tokenize(self, text):
     """Tokenizes a piece of text."""
     text = convert_to_unicode(text)
     text = self._clean_text(text)
+    if not self.do_tokenisation:
+       return whitespace_tokenize(text)
 
     # This was added on November 1st, 2018 for the multilingual and Chinese
     # models. This is also applied to the English models now, but it doesn't
@@ -300,10 +309,11 @@ class BasicTokenizer(object):
 class WordpieceTokenizer(object):
   """Runs WordPiece tokenziation."""
 
-  def __init__(self, vocab, unk_token="[UNK]", max_input_chars_per_word=200):
+  def __init__(self, vocab, unk_token="[UNK]", max_input_chars_per_word=200, do_wordpiece=True):
     self.vocab = vocab
     self.unk_token = unk_token
     self.max_input_chars_per_word = max_input_chars_per_word
+    self.do_wordpiece = do_wordpiece
 
   def tokenize(self, text):
     """Tokenizes a piece of text into its word pieces.
@@ -324,6 +334,8 @@ class WordpieceTokenizer(object):
     """
 
     text = convert_to_unicode(text)
+    if not self.do_wordpiece:
+       return whitespace_tokenize(text)
 
     output_tokens = []
     for token in whitespace_tokenize(text):

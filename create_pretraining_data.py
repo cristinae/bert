@@ -30,17 +30,21 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("input_file", None,
                     "Input raw text file (or comma-separated list of files).")
 
-flags.DEFINE_string(
-    "output_file", None,
-    "Output TF example file (or comma-separated list of files).")
+flags.DEFINE_string("output_file", None,
+    		    "Output TF example file (or comma-separated list of files).")
 
 flags.DEFINE_string("vocab_file", None,
                     "The vocabulary file that the BERT model was trained on.")
 
-flags.DEFINE_bool(
-    "do_lower_case", True,
-    "Whether to lower case the input text. Should be True for uncased "
-    "models and False for cased models.")
+flags.DEFINE_bool("do_lower_case", True,
+                  "Whether to lower case the input text. Should be True for uncased "
+                  "models and False for cased models.")
+
+flags.DEFINE_bool("do_tokenisation", True,
+                  "Whether to tokenise the input text.")
+
+flags.DEFINE_bool("do_wordpiece", True,
+                  "Whether to split the input text with wordpiece units.")
 
 flags.DEFINE_integer("max_seq_length", 128, "Maximum sequence length.")
 
@@ -49,16 +53,14 @@ flags.DEFINE_integer("max_predictions_per_seq", 20,
 
 flags.DEFINE_integer("random_seed", 12345, "Random seed for data generation.")
 
-flags.DEFINE_integer(
-    "dupe_factor", 10,
-    "Number of times to duplicate the input data (with different masks).")
+flags.DEFINE_integer("dupe_factor", 10,
+                     "Number of times to duplicate the input data (with different masks).")
 
 flags.DEFINE_float("masked_lm_prob", 0.15, "Masked LM probability.")
 
-flags.DEFINE_float(
-    "short_seq_prob", 0.1,
-    "Probability of creating sequences which are shorter than the "
-    "maximum length.")
+flags.DEFINE_float("short_seq_prob", 0.1,
+                   "Probability of creating sequences which are shorter than the "
+                   "maximum length.")
 
 
 class TrainingInstance(object):
@@ -195,8 +197,7 @@ def create_training_instances(input_files, tokenizer, max_seq_length,
         # Empty lines are used as document delimiters
         if not line:
           all_documents.append([])
-#       tokens = tokenizer.tokenize(line)  # cris
-        tokens = line
+        tokens = tokenizer.tokenize(line)
         if tokens:
           all_documents[-1].append(tokens)
 
@@ -411,7 +412,8 @@ def main(_):
   tf.logging.set_verbosity(tf.logging.INFO)
 
   tokenizer = tokenization.FullTokenizer(
-      vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
+      vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case,
+      do_tokenisation=FLAGS.do_tokenisation, do_wordpiece=FLAGS.do_wordpiece)
 
   input_files = []
   for input_pattern in FLAGS.input_file.split(","):
