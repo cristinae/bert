@@ -166,6 +166,8 @@ class FullTokenizer(object):
     self.inv_vocab = {v: k for k, v in self.vocab.items()}
     self.basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case, do_tokenisation=do_tokenisation)
     self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab, do_wordpiece=do_wordpiece)
+    self.do_tokenisation = do_tokenisation
+    self.do_wordpiece = do_wordpiece
 
   def tokenize(self, text):
     split_tokens = []
