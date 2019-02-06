@@ -174,7 +174,6 @@ class FullTokenizer(object):
     # fastest option if our input is already preprocessed
     if not self.do_tokenisation and not self.do_wordpiece:
        text = convert_to_unicode(text)
-       text = self._clean_text(text)
        return whitespace_tokenize(text)
     for token in self.basic_tokenizer.tokenize(text):
       for sub_token in self.wordpiece_tokenizer.tokenize(token):
